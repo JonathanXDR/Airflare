@@ -1,72 +1,56 @@
+
 import { EventEmitter } from 'events';
-import * as mdns from 'multicast-dns';
+import mdns from 'multicast-dns';
 import { Device } from './device';
 
 export class Browser extends EventEmitter {
-  private devices_: { [id: number]: Device };
+  private devices_: Map<string, Device>;
   private nextDeviceId_: number;
-  private browser_: any;
+  private mdnsInstance: any;
 
   constructor() {
     super();
-    this.devices_ = {};
+    this.devices_ = new Map();
     this.nextDeviceId_ = 0;
-    this.browser_ = mdns();
+    this.mdnsInstance = mdns();
 
-    this.browser_.on('response', (response: any) => {
-      const info = response.answers[0]; // Assuming the relevant information is in the first answer
-      const device = this.findDeviceByInfo_(info);
-      if (!device) {
-        const newDevice = new Device(this.nextDeviceId_++, info);
-        this.devices_[newDevice.id] = newDevice;
-        newDevice.on('ready', () => {
-          this.emit('deviceOnline', newDevice);
-        });
-        newDevice.on('close', () => {
-          delete this.devices_[newDevice.id];
-          this.emit('deviceOffline', newDevice);
-        });
+    this.mdnsInstance.on('response', this.handleResponse);
+  }
+
+  private handleResponse = (response: any) => {
+    // Handle the discovery of AirPlay devices
+    response.answers.forEach((answer: any) => {
+      if (answer.name.includes('AirPlay') && answer.type === 'A') {
+        const device = new Device(this.nextDeviceId_.toString(), answer);
+        this.devices_.set(this.nextDeviceId_.toString(), device);
+        this.nextDeviceId_++;
+        this.emit('serviceUp', device);
       }
     });
   }
 
-  private findDeviceByInfo_(info: any): Device | null {
-    for (const deviceId in this.devices_) {
-      const device = this.devices_[deviceId];
-      if (device.matchesInfo(info)) {
-        return device;
-      }
-    }
-    return null;
+  public start() {
+    this.mdnsInstance.query({
+      questions: [{
+        name: '_airplay._tcp.local',
+        type: 'PTR'
+      }]
+    });
+  }
+
+  public stop() {
+    // TODO: Implement the stop logic (if needed)
   }
 
   public getDevices(): Device[] {
-    const devices: Device[] = [];
-    for (const deviceId in this.devices_) {
-      const device = this.devices_[deviceId];
-      if (device.isReady()) {
-        devices.push(device);
-      }
-    }
-    return devices;
+    return Array.from(this.devices_.values());
   }
 
-  public getDeviceById(deviceId: number): Device | null {
-    const device = this.devices_[deviceId];
-    if (device && device.isReady()) {
-      return device;
-    }
-    return null;
+  public getDeviceById(id: string): Device | undefined {
+    return this.devices_.get(id);
   }
 
-  public start(): void {
-    // Assuming the relevant service type is 'airplay'
-    this.browser_.query({
-      questions: [{ name: 'airplay.local', type: 'A' }],
-    });
-  }
-
-  public stop(): void {
-    // Not directly supported by multicast-dns; might need to implement a custom stop mechanism
+  private findDeviceByInfo_(info: any): Device | undefined {
+    // TODO: Implement this based on how the previous library identified unique devices
   }
 }
