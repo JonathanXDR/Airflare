@@ -1,4 +1,3 @@
-
 import { EventEmitter } from 'events';
 import mdns from 'multicast-dns';
 import { Device } from './device';
@@ -27,14 +26,16 @@ export class Browser extends EventEmitter {
         this.emit('serviceUp', device);
       }
     });
-  }
+  };
 
   public start() {
     this.mdnsInstance.query({
-      questions: [{
-        name: '_airplay._tcp.local',
-        type: 'PTR'
-      }]
+      questions: [
+        {
+          name: '_airplay._tcp.local',
+          type: 'PTR',
+        },
+      ],
     });
   }
 
@@ -50,7 +51,7 @@ export class Browser extends EventEmitter {
     return this.devices_.get(id);
   }
 
-  private findDeviceByInfo_(info: any): Device | undefined {
-    // TODO: Implement this based on how the previous library identified unique devices
-  }
+  // private findDeviceByInfo_(info: any): Device | undefined {
+  // TODO: Implement this based on how the previous library identified unique devices
+  // }
 }

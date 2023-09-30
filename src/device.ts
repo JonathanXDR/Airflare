@@ -1,14 +1,14 @@
-
 import { EventEmitter } from 'events';
 import plist from 'plist';
 import { Client } from './client';
+import { AirPlayServerInfo } from './types';
 
 export class Device extends EventEmitter {
   public id: string;
   private info_: any;
   private serverInfo_: any;
   private ready_: boolean;
-  private client_: Client;
+  private client_: Client | null;
 
   constructor(id: string, info: any, opt_readyCallback?: Function) {
     super();
@@ -22,18 +22,20 @@ export class Device extends EventEmitter {
     const user = 'Airplay';
     const pass = '';
     this.client_ = new Client(host, port, user, pass, () => {
-      this.client_.get('/server-info', (res: any) => {
-        const obj = plist.parse(res.body);
-        const el = obj[0];
-        this.serverInfo_ = {
-          deviceId: el.deviceid,
-          features: el.features,
-          model: el.model,
-          protocolVersion: el.protovers,
-          sourceVersion: el.srcvers
-        };
-        this.makeReady_(opt_readyCallback);
-      });
+      if (this.client_) {
+        this.client_.get('/server-info', (res: any) => {
+          const obj = plist.parse(res.body) as AirPlayServerInfo[];
+          const el = obj[0];
+          this.serverInfo_ = {
+            deviceId: el.deviceid,
+            features: el.features,
+            model: el.model,
+            protocolVersion: el.protovers,
+            sourceVersion: el.srcvers,
+          };
+          this.makeReady_(opt_readyCallback);
+        });
+      }
     });
   }
 
@@ -68,7 +70,7 @@ export class Device extends EventEmitter {
       features: serverInfo.features,
       model: serverInfo.model,
       slideshowFeatures: [], // Placeholder for future features
-      supportedContentTypes: [] // Placeholder for future features
+      supportedContentTypes: [], // Placeholder for future features
     };
   }
 
