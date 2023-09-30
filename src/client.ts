@@ -1,4 +1,3 @@
-
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
 
@@ -10,7 +9,13 @@ export class Client extends EventEmitter {
   private socket_: Socket;
   private buffer_: Buffer;
 
-  constructor(host: string, port: number, user: string, pass: string, callback: Function) {
+  constructor(
+    host: string,
+    port: number,
+    user: string,
+    pass: string,
+    callback: () => void
+  ) {
     super();
     this.host_ = host;
     this.port_ = port || 7000; // Default port for AirPlay
@@ -36,7 +41,7 @@ export class Client extends EventEmitter {
       this.emit('response', { headers, body, statusCode });
       this.buffer_ = Buffer.alloc(0);
     }
-  }
+  };
 
   public close() {
     this.socket_.end();
@@ -50,8 +55,13 @@ export class Client extends EventEmitter {
     this.issue_('POST', path, body, callback);
   }
 
-  private issue_(method: string, path: string, body: string | null, callback: (response: any) => void) {
-    const data = \`\${method} \${path} HTTP/1.1\r\n\r\n\${body ? body : ''}\`;
+  private issue_(
+    method: string,
+    path: string,
+    body: string | null,
+    callback: (response: any) => void
+  ) {
+    const data = `\${method} \${path} HTTP/1.1\r\n\r\n\${body ? body : ''}`;
     this.socket_.write(data, 'utf8');
     this.once('response', callback);
   }
