@@ -1,9 +1,11 @@
 {
   "name": "airflare",
   "version": "1.0.0",
-  "description": "A Node.js library to discover and stream media to Apple AirPlay devices using multicast-dns. Designed to enhance AirPlay compatibility across various browsers, including non-WebKit ones like Google Chrome.",
-  "main": "index.js",
+  "description": "A Node.js library to discover and stream media to Apple AirPlay devices using multicast-dns.",
+  "main": "dist/index.js",
+  "types": "dist/types.d.ts",
   "scripts": {
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -39,10 +41,13 @@
   },
   "homepage": "https://github.com/JonathanXDR/Airflare#readme",
   "dependencies": {
-    "multicast-dns": "^7.2.5"
+    "multicast-dns": "^7.2.5",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
+    "@types/multicast-dns": "^7.2.2",
     "@types/node": "^20.8.0",
+    "@types/yargs": "^17.0.26",
     "typescript": "^5.2.2"
   }
 }
